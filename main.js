@@ -9,9 +9,6 @@ class Home extends LitElement {
   render() {
     return html`<h1>Hello</h1><a href="/">Home</a> <a href="/about">About</a>`;
   }
-  createRenderRoot() {
-    return this;
-  }
 }
 
 customElements.define("home-index", Home);
@@ -23,7 +20,7 @@ class About extends LitElement {
       this.name = name;
       this.timeStamp = timeStamp;
     },
-     subscribe: false,
+     subscribe: true,
   });
   static properties = {
     name: { type: String },
@@ -36,9 +33,6 @@ class About extends LitElement {
   }
   render() {
     return html`<h1>About ${this.name} / ${new Intl.DateTimeFormat('en-US', { dateStyle: 'full', timeStyle: 'long' }).format(this.timeStamp)}</h1><a href="/">Home</a> <a href="/about">About</a>`;
-  }
-  createRenderRoot() {
-    return this;
   }
 }
 customElements.define('about-index', About);
@@ -73,9 +67,6 @@ class App extends LitElement {
   }
   render() {
     return html`${this.router.outlet()}`;
-  }
-  createRenderRoot() {
-    return this;
   }
 }
 
