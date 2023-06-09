@@ -1,10 +1,13 @@
-import { LitElement, html } from "https://cdn.skypack.dev/lit@2.2.4";
-import { Router } from "https://cdn.skypack.dev/@lit-labs/router@0.0.2";
+import {html, css, LitElement} from 'lit';
+import {Router} from '@lit-labs/router';
+import {ContextProvider, ContextConsumer } from '@lit-labs/context';
+import { createContext } from '@lit-labs/context';
 
+const appContext = createContext('app-context');
 
 class Home extends LitElement {
   render() {
-    return html`<h1>Hello</h1><a href="/">Home</a> <a href="/about">About</a> <a href="/contact">Contact</a>`;
+    return html`<h1>Hello</h1><a href="/">Home</a> <a href="/about">About</a>`;
   }
   createRenderRoot() {
     return this;
@@ -14,47 +17,40 @@ class Home extends LitElement {
 customElements.define("home-index", Home);
 
 class About extends LitElement {
-  render() {
-    return html`<h1>About ${this.name}</h1><a href="/">Home</a> <a href="/about">About</a> <a href="/contact">Contact</a>`;
-  }
-  createRenderRoot() {
-    return this;
-  }  
-}
-
-customElements.define('about-index', About);
-
-class Contact extends LitElement {
+  consumer = new ContextConsumer(this, {
+    context: appContext,
+    callback:  ({ name, timeStamp }) => {
+      this.name = name;
+      this.timeStamp = timeStamp;
+    },
+     subscribe: false,
+  });
   static properties = {
-    name: { type: String }
-  };  
+    name: { type: String },
+    timeStamp: { type: Number }
+  };
   constructor() {
     super();
     this.name = null;
-  }  
+    this.timeStamp = null;
+  }
   render() {
-    return html`<h1>Contact</h1><a href="/">Home</a> <a href="/about">About</a> <a href="/contact">Contact</a>`;
+    return html`<h1>About ${this.name} / ${new Intl.DateTimeFormat('en-US', { dateStyle: 'full', timeStyle: 'long' }).format(this.timeStamp)}</h1><a href="/">Home</a> <a href="/about">About</a>`;
   }
-  
-  connectedCallback() {
-    super.connectedCallback();
-    document.addEventListener('click', this.handleClose);
+  createRenderRoot() {
+    return this;
   }
-
-  disconnectedCallback() {
-    document.removeEventListener('click', this.handleClose);
-    this.name = null;
-    super.disconnectedCallback();
-  }  
-  
-  handleClose = (e) => {
-    console.log(this);
-  }; 
 }
-
-customElements.define('contact-index', Contact);
+customElements.define('about-index', About);
 
 class App extends LitElement {
+  provider = new ContextProvider(this, {
+    context: appContext,
+    initialValue: {
+      name: 'Marcus',
+      timeStamp: Date.now()
+    }
+  });
   router = new Router(this, [
     {
       path: '/',
@@ -62,26 +58,25 @@ class App extends LitElement {
     },
     {
       path: '/about',
-      render: () => html`<about-index .name=${this.name}></about-index>`,      
-    },
-    {
-      path: '/contact',
-      render: () => html`<contact-index></contact-index>`,      
-    }    
+      render: () => html`<about-index></about-index>`,
+    }
   ]);
-  static properties = {
-    name: { type: String }
-  };
   constructor() {
     super();
-    this.name = 'Marcus';
+
+    setInterval(() => {
+      this.provider.setValue({
+        ...this.provider.value,
+        timeStamp: Date.now(),
+      });
+    }, 3000);
   }
   render() {
     return html`${this.router.outlet()}`;
   }
   createRenderRoot() {
     return this;
-  }  
+  }
 }
 
 customElements.define('my-app', App);
